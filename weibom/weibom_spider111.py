@@ -8,7 +8,7 @@ from datetime import datetime
 from pyquery import PyQuery as pq
 import xlwt   #进行excel操作
 import random
-from ..items import WeibomItem
+from weibom.items import WeibomItem
 
 # 定义搜索文档
 readjsonFile = json.load(open('./config.json', 'r', encoding="utf-8"))
@@ -25,6 +25,9 @@ m_referer='https://m.weibo.cn/search?containerid=100103type'   #微博搜索来�
 base_url = 'https://m.weibo.cn/api/container/getIndex?'     #微博接口
 profile_url = 'https://m.weibo.cn/profile/' #个人主页
 
+#host用于指定internet主机和端口号，http1.1必须包含，不然系统返回400，
+
+
 sign=0      #标志是否找到了实时微博以开始
 
 class Weibom_spider(scrapy.Spider):
@@ -40,24 +43,30 @@ class Weibom_spider(scrapy.Spider):
     def start_requests(self):
         page=start_page
         # print(page)
+
         while int(page) <= int(end_page):
             para = {
                 'containerid': m_referer[m_referer.find('100103'):] + urlsearch,
                 'page': page
             }
             url = base_url + urlencode(para)  # 进行url编码添加到地址结尾  连带页数
-            print("url1:"+url)
             yield scrapy.Request(url=url, callback=self.parse, headers=self.headers)
             page=int(page)+1
             time.sleep(random.random()+1)
+            # print(page)
 
+        # try:
+        #     response = requests.get(url, headers=headers)  # request请求  地址和携带请求头
+        #     if response.status_code == 200:
+        #         return response.json()  # 以json格式返回数据
+        # except requests.ConnectionError as e:
+        #     print("Error:", e.args)
 
     # 分析JSON格式的数据，抓取目标信息
     def parse(self,response):
         global sign  # sign是用来标记是否有过title   在格式中从实时微博进行爬取  找到实时微博title之后开始爬取   之后不用进行判断title而用sign来判断
         print(response)
-        items = json.loads(response.text).get('data').get('cards')
-        # items = response.json().get('data').get('cards')
+        items = response.json().get('data').get('cards')
         for item1 in items:
             item = item1.get("title")
             if (item != None or sign == 1):  # 分析数据发现只有实时微博开始时有一个title  所以可以进行判断是否有title并从title开始爬取
@@ -75,8 +84,20 @@ class Weibom_spider(scrapy.Spider):
                         # print("scheme="+scheme)
                         txtwb = pq(itemc.get('text')).text()  # 获取微博博文
                         # print("txtwb="+txtwb)
+                        if txtwb.find("全文") + 2 == len(txtwb):  # 利用微博博文进行判断是否结尾有“全文二字”
+                            caurl=scheme[scheme.find('mblogid=')+8:scheme.find('mblogid=')+17],scheme
+                            datatxt = self.get_txt_page(self,caurl)
+                            # 如果有全文那么需要进入其中再次进行爬取全文数据，首先切割链接获取mblogid，scheme对应的是Referer的链接信息
+                            # print("datatext=",datatxt)
+                            try:
+                                txtitem = pq(datatxt.get('data').get('text')).text()
+                                weibo['content'] = pq(datatxt.get('data').get('text')).text()  # 用pyquery去处理得到的数据
+                            except:
+                                pass
+                        else:
+                            weibo['content'] = pq(itemc.get('text')).text()  # 不需要对全文做处理直接获取text
                         weibo['post_time'] = str(datetime.strptime(pq(itemc.get('created_at')).text(),
-                                                                   '%a %b %d %H:%M:%S +0800 %Y'))  # 日期   #修改日期格式   默认微博日期格式是带时区的GMT的格式
+                                                                  '%a %b %d %H:%M:%S +0800 %Y'))  # 日期   #修改日期格式   默认微博日期格式是带时区的GMT的格式
                         weibo['thumbs_up'] = itemc.get('attitudes_count')  # 点赞次数
                         weibo['comments'] = itemc.get('comments_count')  # 评论次数
                         weibo['reposts'] = itemc.get('reposts_count')  # 转发次数
@@ -90,35 +111,67 @@ class Weibom_spider(scrapy.Spider):
                         d2 = datetime.strptime(dateEnd + ' 23:59:59', '%Y-%m-%d %H:%M:%S')  # 结束时间
                         d3 = datetime.strptime(dateStart + ' 00:00:00', '%Y-%m-%d %H:%M:%S')  # 开始时间
                         if d1 >= d3:
-                            if d1 <= d2:#判断日期是否在指定范围内
-                                if txtwb.find("全文") + 2 == len(txtwb):  # 利用微博博文进行判断是否结尾有“全文二字”
-                                    caurl = scheme[scheme.find('mblogid=') + 8:scheme.find('mblogid=') + 17]
-                                    base_urlx = 'https://m.weibo.cn/statuses/show?'  # 相较于获取搜索结果的url不同
-                                    para = {
-                                        'id': caurl,  # 只需要一个参数  且参数名为id
-                                    }
-                                    second_url = base_urlx + urlencode(para)  # 进行url编码添加到地址结尾  连带页数
-                                    print("url2:" + second_url)
-                                    print("weibo1:",weibo)
-                                    yield scrapy.Request(second_url, callback=self.get_txt_page,meta={'weiboitem': weibo})#进行全文提取
-                                else:
-                                    weibo['content'] = pq(itemc.get('text')).text()  # 不需要对全文做处理直接获取text
-                                    print("weibo2_1:" , weibo)
-                                    yield weibo
+                            if d1 <= d2:
+                                yield weibo
+                                print("result:", weibo)
 
+                                # save_data_toexcel(result, savepath)
                         else:
                             continue
+
+                        # 一个一个返回weibo
+                        # print("weibo=",weibo)
+                        # for key in weibo:
+                        #     print(key + ':', weibo[key])
+                        # print(weibo)
+
 
             else:
                 continue
 
-    def get_txt_page(self, response):
+    def get_txt_page(self,containerid, referer):
+        base_urlx = 'https://m.weibo.cn/statuses/show?'  # 相较于获取搜索结果的url不通
+        txtheaders = {
+            'Referer': referer,
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36 Edg/80.0.361.111',
+            'Host': 'm.weibo.cn',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+        para = {
+            'id': containerid,  # 只需要一个参数  且参数名为id
+        }
+        url = base_urlx + urlencode(para)  # 进行url编码添加到地址结尾  连带页数
+        try:
+            response = requests.get(url, headers=self.headers)  # request请求  地址和携带请求头
+            if response.status_code == 200:
+                return response.json()  # 以json格式返回数据
+        except requests.ConnectionError as e:
+            print("Error:", e.args)
 
-        weibo = response.meta['weiboitem']
-        # print("response.text",response.text)
-        txtitem = json.loads(response.text).get('data').get('text')
-        weibo['content'] = pq(txtitem).text()  # 用pyquery去处理得到的数据
-        print("weibo2_2:", weibo)
-        yield weibo
+    def parse2(self, response):
+        pass
+    # def main(self): # main函数
+    #     ini_book()
+    #     page = strat_page  # 页数  从第一页开始  也是需要传入的一个参数
+    #     while page <= int(end_page):
+    #         data = get_page(page)  # 获取网页的json格式的数据
+    #         results = parse_json(data)  # 解析网页的json数据
+    #         for result in results:  # 循环去便利数据
+    #
+    #             d1 = datetime.strptime(result['date'], '%Y-%m-%d %H:%M:%S')  # 博文时间
+    #             d2 = datetime.strptime(dateEnd + ' 23:59:59', '%Y-%m-%d %H:%M:%S')  # 结束时间
+    #             d3 = datetime.strptime(dateStart + ' 00:00:00', '%Y-%m-%d %H:%M:%S')  # 开始时间
+    #
+    #             if d1 >= d3:
+    #                 if d1 <= d2:
+    #                     print("result:", result)
+    #                     save_data_toexcel(result, savepath)
+    #             else:
+    #                 continue
+    #         print('第' + str(page) + '页抓取完成')
+    #         time.sleep(random.random() * 4 + 1)
+    #         page += 1
+    #     print('全部网页抓取完成')
+
 
 

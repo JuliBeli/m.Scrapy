@@ -37,10 +37,12 @@ NEWSPIDER_MODULE = "weibom.spiders"
 #TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
-#DEFAULT_REQUEST_HEADERS = {
+# DEFAULT_REQUEST_HEADERS = {
 #    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 #    "Accept-Language": "en",
-#}
+# }
+
+
 
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
@@ -64,7 +66,8 @@ NEWSPIDER_MODULE = "weibom.spiders"
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
    # "weibom.pipelines.WeibomPipeline": 300,
-    "weibom.pipelines.ExcelPipeline": 300,
+    "weibom.pipelines.MySQLPipeline":300,
+    "weibom.pipelines.ExcelPipeline": 100,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
