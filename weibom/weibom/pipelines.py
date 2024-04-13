@@ -12,12 +12,12 @@ import xlwt
 
 class MySQLPipeline:
     def __init__(self):
-        self.conn = pymysql.Connect(host='localhost',
-                                    port=3306,
-                                    user='root',
-                                    password='root',
-                                    database='ugcp',
-                                    charset='utf8mb4')
+        self.conn = pymysql.Connect(host=****,
+                                    port=****,
+                                    user=****,
+                                    password=****,
+                                    database=****,
+                                    charset=****)
 
         # 创建一个游标对象
         self.cursor = self.conn.cursor()
