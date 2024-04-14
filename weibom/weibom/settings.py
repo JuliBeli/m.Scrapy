@@ -37,10 +37,11 @@ NEWSPIDER_MODULE = "weibom.spiders"
 #TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
-# DEFAULT_REQUEST_HEADERS = {
-#    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-#    "Accept-Language": "en",
-# }
+DEFAULT_REQUEST_HEADERS = {
+   "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+   "Accept-Language": "zh",
+   # "Accept-Language": "en",
+}
 
 
 
@@ -52,9 +53,11 @@ NEWSPIDER_MODULE = "weibom.spiders"
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
-#    "weibom.middlewares.WeibomDownloaderMiddleware": 543,
-#}
+DOWNLOADER_MIDDLEWARES = {
+   # "weibom.middlewares.WeibomDownloaderMiddleware": 543,
+    'weibom.middlewares.FakeUserAgentMiddleware': 100,
+
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -67,7 +70,7 @@ NEWSPIDER_MODULE = "weibom.spiders"
 ITEM_PIPELINES = {
    # "weibom.pipelines.WeibomPipeline": 300,
     "weibom.pipelines.MySQLPipeline":300,
-    "weibom.pipelines.ExcelPipeline": 100,
+    "weibom.pipelines.ExcelPipeline": 100,#先存进excel
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
