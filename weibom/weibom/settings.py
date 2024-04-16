@@ -6,6 +6,22 @@
 #     https://docs.scrapy.org/en/latest/topics/settings.html
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+import os
+import sys
+import django
+
+
+
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'djangoProject'))
+# sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'djangoProject'))
+# sys.path.append('D:\\PycharmProject\\UGCDAV\\djangoProject')
+# sys.path.append('D:\\PycharmProject\\UGCDAV\\djangoProject\\weibo_app')
+# os.environ['DJANGO_SETTINGS_MODULE'] = 'djangoProject.settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+
+print(sys.path)
+django.setup()
+
 
 BOT_NAME = "weibom"
 
@@ -71,6 +87,7 @@ ITEM_PIPELINES = {
    # "weibom.pipelines.WeibomPipeline": 300,
     "weibom.pipelines.MySQLPipeline":300,
     "weibom.pipelines.ExcelPipeline": 100,#先存进excel
+    # "weibom.pipelines.WeibomPipeline": 300, #再存进数据库
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

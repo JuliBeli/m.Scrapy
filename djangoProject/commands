@@ -1,0 +1,6 @@
+﻿在manage.py目录下
+python manage.py makemigrations
+# 将数据库的操作记录到数据迁移目录（migrations）
+python manage.py migrate
+# 将数据库的修改生效
+只要涉及导数据表的修改就需要执行上面的两条命令

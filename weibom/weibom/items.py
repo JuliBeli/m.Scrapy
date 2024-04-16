@@ -5,7 +5,6 @@
 
 import scrapy
 
-
 class WeibomItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
@@ -18,4 +17,5 @@ class WeibomItem(scrapy.Item):
     comments = scrapy.Field()
     reposts = scrapy.Field()
     content = scrapy.Field()
-    # pass
+
+

@@ -85,8 +85,8 @@ class Weibom_spider(scrapy.Spider):
                         weibo['username'] = itemc.get('user').get('screen_name')  # 发布人微博名
 
                         weibo['user_gender'] = itemc.get('user').get('gender')  # 发布人性别
-                        weibo['user_followers'] = itemc.get('user').get('followers_count_str')  # 发布人粉丝数
-
+                        uf = itemc.get('user').get('followers_count_str')  # 发布人粉丝数
+                        weibo['user_followers'] = self.convert_chinese_number(uf)#转换成纯数字
                         d1 = datetime.strptime(weibo['post_time'], '%Y-%m-%d %H:%M:%S')  # 博文时间
                         d2 = datetime.strptime(dateEnd + ' 23:59:59', '%Y-%m-%d %H:%M:%S')  # 结束时间
                         d3 = datetime.strptime(dateStart + ' 00:00:00', '%Y-%m-%d %H:%M:%S')  # 开始时间
@@ -100,11 +100,11 @@ class Weibom_spider(scrapy.Spider):
                                     }
                                     second_url = base_urlx + urlencode(para)  # 进行url编码添加到地址结尾  连带页数
                                     print("url2:" + second_url)
-                                    print("weibo1:",weibo)
+                                    # print("weibo1:",weibo)
                                     yield scrapy.Request(second_url, callback=self.get_txt_page,meta={'weiboitem': weibo})#进行全文提取
                                 else:
                                     weibo['content'] = pq(itemc.get('text')).text()  # 不需要对全文做处理直接获取text
-                                    print("weibo2_1:" , weibo)
+                                    # print("weibo2_1:" , weibo)
                                     yield weibo
 
                         else:
@@ -119,7 +119,25 @@ class Weibom_spider(scrapy.Spider):
         txtitem = json.loads(response.text).get('data').get('text')
         weibo['content'] = pq(txtitem).text()  # 用pyquery去处理得到的数据
         time.sleep(random.random())
-        print("weibo2_2:", weibo)
+        # print("weibo2_2:", weibo)
         yield weibo
 
+    # @staticmethod
+    # def convert_chinese_number(number_str):
+    #     if '万' in number_str:
+    #         number_str = number_str.replace('万', '')
+    #         return float(number_str) * 10000
+    #     else:
+    #         return int(number_str)
 
+    @staticmethod
+    def convert_chinese_number(number_str):
+        try:
+            if '万' in number_str:
+                number_str = number_str.replace('万', '')
+                return int(float(number_str) * 10000)
+            else:
+                return int(number_str)
+        except ValueError:
+            print(f"Error converting '{number_str}' to integer.")
+            return 0
