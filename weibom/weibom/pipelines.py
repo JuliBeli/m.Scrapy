@@ -14,9 +14,9 @@ class MySQLPipeline:
     def __init__(self):
         self.conn = pymysql.Connect(host='localhost',
                                     port=3306,
-                                    user='root',
-                                    password='root',
-                                    database='ugcp',
+                                    user='****',
+                                    password='****',
+                                    database='****',
                                     charset='utf8mb4')
 
         # 创建一个游标对象
