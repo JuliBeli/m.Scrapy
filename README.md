@@ -6,4 +6,5 @@
 修复了mysql存储emoji的错误;
 增加了随机选取agent的功能;
 Django restframwork 实现一个api;
+weibom:scrapy
 下一步：更多的api
