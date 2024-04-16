@@ -101,3 +101,24 @@ class WeibomDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
+
+import os
+from fake_useragent import UserAgent
+from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
+
+
+class FakeUserAgentMiddleware(UserAgentMiddleware):
+    def __init__(self, ua):
+        super(UserAgentMiddleware, self).__init__()
+        self.ua = ua
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        path = f'./fake_agents.json'
+        ua = UserAgent(cache_path=path)
+        s = cls(ua=ua)
+        return s
+
+    def process_request(self, request, spider):
+        request.headers['User-agent'] = self.ua.random
+        return None

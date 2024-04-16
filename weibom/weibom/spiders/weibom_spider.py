@@ -29,12 +29,12 @@ sign=0      #标志是否找到了实时微博以开始
 
 class Weibom_spider(scrapy.Spider):
     name = "weibom_spider"
-    headers = {                 #封装请求头  让网站识别自己是浏览器
-        'Referer': m_referer+urlsearch,             #告诉服务器自己是哪里来的  从那个页面来的   来路
-        'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36 Edg/80.0.361.111',    #包含操作系统和浏览器信息
-        'Host':'m.weibo.cn',                #请求服务器的域名和端口号
-        'X-Requested-With':'XMLHttpRequest'             #代表是ajax请求
-    }
+    # headers = {                 #封装请求头  让网站识别自己是浏览器
+    #     'Referer': m_referer+urlsearch,             #告诉服务器自己是哪里来的  从那个页面来的   来路
+    #     'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36 Edg/80.0.361.111',    #包含操作系统和浏览器信息
+    #     'Host':'m.weibo.cn',                #请求服务器的域名和端口号
+    #     'X-Requested-With':'XMLHttpRequest'             #代表是ajax请求
+    # }
     # print(page)
     # 获取网页的json（这个是获取搜索之后网页的json数据的函数）
     def start_requests(self):
@@ -47,15 +47,16 @@ class Weibom_spider(scrapy.Spider):
             }
             url = base_url + urlencode(para)  # 进行url编码添加到地址结尾  连带页数
             print("url1:"+url)
-            yield scrapy.Request(url=url, callback=self.parse, headers=self.headers)
+            # yield scrapy.Request(url=url, callback=self.parse, headers=self.headers)
+            yield scrapy.Request(url=url, callback=self.parse)
             page=int(page)+1
-            time.sleep(random.random()+1)
+            time.sleep(random.random())
 
 
     # 分析JSON格式的数据，抓取目标信息
     def parse(self,response):
         global sign  # sign是用来标记是否有过title   在格式中从实时微博进行爬取  找到实时微博title之后开始爬取   之后不用进行判断title而用sign来判断
-        print(response)
+        # print(response)
         items = json.loads(response.text).get('data').get('cards')
         # items = response.json().get('data').get('cards')
         for item1 in items:
@@ -93,9 +94,9 @@ class Weibom_spider(scrapy.Spider):
                             if d1 <= d2:#判断日期是否在指定范围内
                                 if txtwb.find("全文") + 2 == len(txtwb):  # 利用微博博文进行判断是否结尾有“全文二字”
                                     caurl = scheme[scheme.find('mblogid=') + 8:scheme.find('mblogid=') + 17]
-                                    base_urlx = 'https://m.weibo.cn/statuses/show?'  # 相较于获取搜索结果的url不同
+                                    base_urlx = 'https://m.weibo.cn/statuses/show?'  # 用于构造全文链接
                                     para = {
-                                        'id': caurl,  # 只需要一个参数  且参数名为id
+                                        'id': caurl,
                                     }
                                     second_url = base_urlx + urlencode(para)  # 进行url编码添加到地址结尾  连带页数
                                     print("url2:" + second_url)
@@ -112,12 +113,12 @@ class Weibom_spider(scrapy.Spider):
             else:
                 continue
 
-    def get_txt_page(self, response):
-
+    def get_txt_page(self, response):#获取全文内容
         weibo = response.meta['weiboitem']
         # print("response.text",response.text)
         txtitem = json.loads(response.text).get('data').get('text')
         weibo['content'] = pq(txtitem).text()  # 用pyquery去处理得到的数据
+        time.sleep(random.random())
         print("weibo2_2:", weibo)
         yield weibo
 
